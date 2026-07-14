@@ -1,0 +1,8 @@
+services:
+  placer:
+    build: .
+    volumes:
+      - ./assets:/app/assets
+    environment:
+      MPLBACKEND: Agg
+      PYTHONPATH: /app
