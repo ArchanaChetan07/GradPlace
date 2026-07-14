@@ -73,8 +73,55 @@ STANDARD_CELL_HEIGHT = 1.0
 MIN_STANDARD_CELL_PINS = 3
 MAX_STANDARD_CELL_PINS = 6
 
+# Density / overlap schedule (portfolio-verified knobs)
+MACRO_WEIGHT = 5.0
+STD_CELL_BIN_CAP_FRACTION = 0.25  # std-cell area contribution ≤ 0.25 × bin_capacity
+LAMBDA_OVERLAP_PHASE1_START = 0.1
+LAMBDA_OVERLAP_PHASE1_END = 1.0
+LAMBDA_OVERLAP_PHASE2_END = 15.0
+LAMBDA_OVERLAP_PHASE1_FRACTION = 0.4  # first 40% of epochs
+
 # Output directory
 OUTPUT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+def std_cell_bin_capacity_cap(bin_size):
+    """Return max effective area a std-cell may contribute to a density bin.
+
+    Cap = STD_CELL_BIN_CAP_FRACTION × (bin_size²). Macros are not capped.
+    """
+    return STD_CELL_BIN_CAP_FRACTION * (bin_size * bin_size)
+
+
+def lambda_overlap_schedule(epoch: int, num_epochs: int) -> float:
+    """Two-phase λ_overlap ramp used by train_placement.
+
+    Phase 1 (0–40% of epochs): 0.1 → 1.0
+    Phase 2 (40–100%):         1.0 → 15.0 (clamped)
+    """
+    if num_epochs <= 0:
+        return LAMBDA_OVERLAP_PHASE1_START
+    phase1_end_epoch = int(LAMBDA_OVERLAP_PHASE1_FRACTION * num_epochs)
+    if phase1_end_epoch <= 0:
+        progress = epoch / max(num_epochs, 1)
+        value = LAMBDA_OVERLAP_PHASE1_END + (
+            LAMBDA_OVERLAP_PHASE2_END - LAMBDA_OVERLAP_PHASE1_END
+        ) * progress
+        return min(value, LAMBDA_OVERLAP_PHASE2_END)
+    if epoch < phase1_end_epoch:
+        progress_phase1 = epoch / phase1_end_epoch
+        value = LAMBDA_OVERLAP_PHASE1_START + (
+            LAMBDA_OVERLAP_PHASE1_END - LAMBDA_OVERLAP_PHASE1_START
+        ) * progress_phase1
+    else:
+        phase2_duration = max(num_epochs - phase1_end_epoch, 1)
+        # Reach exactly PHASE2_END on the final training epoch (num_epochs - 1)
+        denom = max(phase2_duration - 1, 1)
+        progress_phase2 = min(1.0, (epoch - phase1_end_epoch) / denom)
+        value = LAMBDA_OVERLAP_PHASE1_END + (
+            LAMBDA_OVERLAP_PHASE2_END - LAMBDA_OVERLAP_PHASE1_END
+        ) * progress_phase2
+    return min(value, LAMBDA_OVERLAP_PHASE2_END)
 
 
 def setup_output_directory(base_output_dir=None):
@@ -473,16 +520,13 @@ def _compute_grid_density_loss(cell_features, bin_size, blur=False, debug=False,
     is_macro = heights > 1.0  # [N] boolean tensor
     
     # Modify per-cell area contribution before splatting to bins
-    # Macros get higher weight (macro_weight) to account for their larger impact on density
+    # Macros get higher weight (MACRO_WEIGHT) to account for their larger impact on density
     # Standard cells get weight 1.0 (no change)
-    macro_weight = 5.0
-    effective_area = areas * torch.where(is_macro, macro_weight, 1.0)  # [N]
+    effective_area = areas * torch.where(is_macro, MACRO_WEIGHT, 1.0)  # [N]
     
     # Cap standard-cell contribution to prevent flooding from many small cells
-    # This prevents a large number of standard cells from overwhelming the density grid
-    # Cap is set to 25% of bin capacity to allow reasonable density but prevent excessive accumulation
-    bin_capacity = bin_size * bin_size
-    cap = 0.25 * bin_capacity  # Cap for standard cells
+    # Cap is STD_CELL_BIN_CAP_FRACTION (0.25) × bin_capacity
+    cap = std_cell_bin_capacity_cap(bin_size)
     effective_area = torch.where(
         is_macro,
         effective_area,  # Macros: use weighted area (no cap)
@@ -1077,25 +1121,8 @@ def train_placement(
                 nan_detected = True
             overlap_loss = torch.clamp(overlap_loss, min=0.0, max=1e6)
         
-        # Compute lambda_overlap schedule: two-phase smooth ramp
-        # Phase 1 (0%–40%): slow ramp from 0.1 to 1.0
-        # Phase 2 (40%–100%): aggressive ramp from 1.0 to 15.0
-        # Clamp to 15.0 maximum
-        phase1_end_epoch = int(0.4 * num_epochs)
-        
-        if epoch < phase1_end_epoch:
-            # Phase 1: slow ramp from 0.1 to 1.0 over first 40% of training
-            progress_phase1 = epoch / phase1_end_epoch  # 0.0 to 1.0
-            lambda_overlap_current = 0.1 + (1.0 - 0.1) * progress_phase1
-        else:
-            # Phase 2: aggressive ramp from 1.0 to 15.0 over remaining 60% of training
-            phase2_start_epoch = phase1_end_epoch
-            phase2_duration = num_epochs - phase2_start_epoch
-            progress_phase2 = (epoch - phase2_start_epoch) / phase2_duration  # 0.0 to 1.0
-            lambda_overlap_current = 1.0 + (15.0 - 1.0) * progress_phase2
-        
-        # Clamp to 15.0 maximum (safety check)
-        lambda_overlap_current = min(lambda_overlap_current, 15.0)
+        # Two-phase λ_overlap schedule (0.1 → 1.0 → 15.0); see lambda_overlap_schedule()
+        lambda_overlap_current = lambda_overlap_schedule(epoch, num_epochs)
         
         # Combined loss with scheduled lambda_overlap
         total_loss = lambda_wirelength * wl_loss + lambda_overlap_current * overlap_loss

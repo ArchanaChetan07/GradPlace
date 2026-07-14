@@ -61,9 +61,9 @@ def main():
     else:
         test_cases = TEST_CASES
     
-    # Run tests and get results
-    results = run_all_tests(test_cases, device=args.device)
-    
+    # Run tests and get results (aggregate dict + per-case list)
+    results, _ = run_all_tests(test_cases, device=args.device)
+
     # Print final metrics
     print(f"Average Overlap: {results['avg_overlap']:.4f}")
     print(f"Average Wirelength: {results['avg_wirelength']:.4f}")
