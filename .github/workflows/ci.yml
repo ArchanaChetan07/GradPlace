@@ -33,6 +33,7 @@ jobs:
         run: pytest tests/ -v --tb=short
         env:
           MPLBACKEND: Agg
+          PYTHONPATH: ${{ github.workspace }}
 
   docker:
     name: Docker build
