@@ -91,5 +91,6 @@ def test_benchmark_metrics_json_schema_if_present():
     assert data["benchmark"]["label"].startswith("synthetic")
     assert "before" in data and "after" in data
     assert "runtime_seconds" in data
-    assert Path(data["artifacts"]["before_png"]).exists()
-    assert Path(data["artifacts"]["after_png"]).exists()
+    for key in ("before_png", "after_png", "side_by_side_png"):
+        rel = Path(data["artifacts"][key].replace("\\", "/"))
+        assert rel.exists(), f"missing artifact {rel}"

@@ -214,9 +214,9 @@ def run_eval(epochs: int, outdir: Path, device: str = "cpu") -> dict:
         },
         "runtime_seconds": round(runtime_s, 3),
         "artifacts": {
-            "before_png": str(outdir / "placement_before.png"),
-            "after_png": str(outdir / "placement_after.png"),
-            "side_by_side_png": str(outdir / "placement_before_after.png"),
+            "before_png": (outdir / "placement_before.png").as_posix(),
+            "after_png": (outdir / "placement_after.png").as_posix(),
+            "side_by_side_png": (outdir / "placement_before_after.png").as_posix(),
         },
     }
 

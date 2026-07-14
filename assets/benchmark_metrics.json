@@ -49,8 +49,8 @@
   },
   "runtime_seconds": 4.373,
   "artifacts": {
-    "before_png": "assets\\placement_before.png",
-    "after_png": "assets\\placement_after.png",
-    "side_by_side_png": "assets\\placement_before_after.png"
+    "before_png": "assets/placement_before.png",
+    "after_png": "assets/placement_after.png",
+    "side_by_side_png": "assets/placement_before_after.png"
   }
 }
