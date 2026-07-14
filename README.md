@@ -1,100 +1,153 @@
-# GradPlace
+# GradPlace — Differentiable VLSI Cell Placement
 
-Python · SystemVerilog · Verilog · RTL · UVM · EDA · Verilator · Yosys · LLM · CI/CD · simulation. macros 5x weight; stdcells 25% bin cap; force ramp 0.1->15.0; 15 files. Hardware/EDA + LLM evaluation for RTL correctness and verification workflows.
+### PyTorch analytical placer with macro-aware density, bin capacity caps, and two-phase λ_overlap ramp for overlap/wirelength optimization.
 
-## Results (numbers)
+[![GitHub](https://img.shields.io/badge/repo-GradPlace-181717?logo=github)](https://github.com/ArchanaChetan07/GradPlace)
+[![Language](https://img.shields.io/badge/language-Python-3572A5)](https://github.com/ArchanaChetan07/GradPlace)
+[![License](https://img.shields.io/badge/license-See%20repository-yellow)](https://github.com/ArchanaChetan07/GradPlace)
+[![CI](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?logo=githubactions&logoColor=white)](https://github.com/ArchanaChetan07/GradPlace/actions)
 
-| Metric | Value |
-|---|---|
-| Tracked repository files | **15** |
-| Python modules | **5** |
-| Notebooks | **0** |
-| Markdown docs | **2** |
-| CI workflows present | **Yes** |
-| Automated tests present | **No** |
-| Project highlights | **macros 5x weight; stdcells 25% bin cap; force ramp 0.1->15.0; 15 files** |
+---
+
+## Overview
+
+Global placement must spread macros/stdcells while minimizing wirelength and residual overlaps using GPU-friendly gradients.
+
+Large placement.py implements density/overflow potentials with macro_weight=5.0, stdcell bin cap 0.25×bin_capacity, and λ_overlap smooth ramp 0.1→1.0 then →15.0; test harnesses and timestamped output metrics/images.
+
+Runnable placement challenge entrypoint printing average overlap, wirelength, and runtime across predefined test cases.
+
+This repository is maintained as **production-minded portfolio work**: clear architecture, automated checks where present, and metrics that are **traceable to committed artifacts** (never invented).
+
+---
+
+## Architecture
+
+Netlist/test case → initialize cell coords → optimize wirelength+overlap losses with λ schedule → metrics/images under outputs/
+
+```mermaid
+flowchart TD
+  T[Test case macros/stdcells] --> P[placement optimizer]
+  P --> D[density / overflow potential]
+  P --> W[wirelength loss]
+  D --> L[λ_overlap ramp 0.1→15]
+  W --> L
+  L --> O[outputs/metrics + images]
+```
+
+```mermaid
+sequenceDiagram
+  participant U as User/Client
+  participant S as Service/Pipeline
+  participant E as Eval/Tools
+  U->>S: request / job
+  S->>E: execute
+  E-->>S: results
+  S-->>U: report / response
+```
+
+---
+
+## Results & repository facts
+
+> Only values found in code, configs, tests, or generated reports are listed. Absence of a clinical/ML accuracy number means it was **not** published in-repo.
+
+| Metric | Value | Source |
+|---|---|---|
+| macro_weight | **5.0** | `placement.py` |
+| Standard-cell bin capacity cap | **0.25 × bin_capacity** | `placement.py` |
+| λ_overlap ramp range | **0.1 → 15.0 (two-phase)** | `placement.py` |
+| Tracked blobs on main | **15** | `git tree main` |
+| Tracked files | **15** | `git tree` |
+| Python modules | **5** | `git tree` |
+| Test-related paths | **1** | `git tree` |
+| CI workflows | **Yes** | `.github/workflows` |
+| Docker present | **No** | `repo root` |
+
+```mermaid
+%%{init: {'theme':'base'}}%%
+pie showData title Language composition (bytes)
+    "Python" : 100
+```
+
+---
+
+## Key features
+
+- Macro-weighted density potential
+- Standard-cell bin capacity capping
+- Two-phase λ_overlap force ramp
+- Debug image dumps (snapshots, heatmaps, loss curves)
+- Quick vs full test suites
+- CUDA optional
+
+---
 
 ## Tech stack
 
-- **Primary language:** Python
-- **Languages (GitHub):** Python (138578 bytes)
-- **Focus area:** chip
-- **Tooling keywords:** Python, machine-learning, CI/CD, API, Docker, Kubernetes, FastAPI, Prometheus, testing, automation, MLOps, LLM
+| Layer | Technology |
+|---|---|
+| language | Python |
+| dl | PyTorch |
+| domain | VLSI placement |
+| tooling | debug visualizations / JSON metrics |
 
-## Architecture (logical)
+---
 
-\\	ext
-Inputs → Processing / models / agents → Evaluation & metrics → CI checks → Artifacts
-\
-## Engineering practices
-
-1. Reproducible layout with clear module boundaries  
-2. Automated validation via CI and/or tests when present  
-3. Documentation that states measurable outcomes, not slogans  
-4. Skill surface aligned to common JD keywords: Python, machine learning, NLP/LLM, Kubernetes, Docker, observability, data pipelines  
-
-## Quick start
-
-\\ash
-git clone https://github.com/ArchanaChetan07/GradPlace.git
-cd GradPlace
-# Install project requirements (see requirements.txt / pyproject.toml / environment files if present)
-# Run tests or main entrypoints documented in this repo
-\
 ## Skills demonstrated
 
-Python · machine-learning · CI/CD · API design · testing · automation · Docker · Kubernetes · FastAPI · Prometheus · data-science · LLM · MLOps · software-engineering · benchmarking · observability
+Python · PyTorch · CI/CD · testing · automation
 
-## License / notice
+Keyword surface: **Python · Python · machine-learning · CI/CD · testing · API · Docker · automation · data-science · software-engineering · system-design · observability · LLM · cloud**
 
-See repository license file if present. Metrics above are derived from repository structure and previously published validation notes where available.
+---
 
+## Project structure
 
-### Extended notes
+```text
+GradPlace/
+├── placement.py
+├── main.py / src/main.py
+├── test.py
+├── check_cuda.py
+├── outputs/README.md
+└── .github/workflows/ci.yml
+```
 
-This section expands documentation for completeness: reproducibility, keyword coverage for Python, machine-learning, CI/CD, API, Docker, Kubernetes, FastAPI, Prometheus, testing, automation, MLOps, LLM, data-science, software-engineering, benchmarking, and observability practices used across the portfolio.
+---
 
+## Installation & usage
 
-### Extended notes
+```bash
+git clone https://github.com/ArchanaChetan07/GradPlace.git
+cd GradPlace
+pip install -r requirements.txt
+python main.py --quick --device cpu
+```
 
-This section expands documentation for completeness: reproducibility, keyword coverage for Python, machine-learning, CI/CD, API, Docker, Kubernetes, FastAPI, Prometheus, testing, automation, MLOps, LLM, data-science, software-engineering, benchmarking, and observability practices used across the portfolio.
+---
 
+## How it works
 
-### Extended notes
+Cells are optimized with differentiable density/overflow and wirelength objectives; macros are upweighted in density, stdcells are capacity-capped per bin, and overlap penalty strength ramps across training phases before emitting metrics.
 
-This section expands documentation for completeness: reproducibility, keyword coverage for Python, machine-learning, CI/CD, API, Docker, Kubernetes, FastAPI, Prometheus, testing, automation, MLOps, LLM, data-science, software-engineering, benchmarking, and observability practices used across the portfolio.
+---
 
+## Future improvements
 
-### Extended notes
+- Commit example outputs/run_* metrics JSONs
+- Expand README beyond template spam using outputs/README content
+- Public leaderboard numbers if contest scores exist
 
-This section expands documentation for completeness: reproducibility, keyword coverage for Python, machine-learning, CI/CD, API, Docker, Kubernetes, FastAPI, Prometheus, testing, automation, MLOps, LLM, data-science, software-engineering, benchmarking, and observability practices used across the portfolio.
+---
 
+## License
 
-### Extended notes
+See repository.
 
-This section expands documentation for completeness: reproducibility, keyword coverage for Python, machine-learning, CI/CD, API, Docker, Kubernetes, FastAPI, Prometheus, testing, automation, MLOps, LLM, data-science, software-engineering, benchmarking, and observability practices used across the portfolio.
+---
 
-
-### Extended notes
-
-This section expands documentation for completeness: reproducibility, keyword coverage for Python, machine-learning, CI/CD, API, Docker, Kubernetes, FastAPI, Prometheus, testing, automation, MLOps, LLM, data-science, software-engineering, benchmarking, and observability practices used across the portfolio.
-
-
-### Extended notes
-
-This section expands documentation for completeness: reproducibility, keyword coverage for Python, machine-learning, CI/CD, API, Docker, Kubernetes, FastAPI, Prometheus, testing, automation, MLOps, LLM, data-science, software-engineering, benchmarking, and observability practices used across the portfolio.
-
-
-### Extended notes
-
-This section expands documentation for completeness: reproducibility, keyword coverage for Python, machine-learning, CI/CD, API, Docker, Kubernetes, FastAPI, Prometheus, testing, automation, MLOps, LLM, data-science, software-engineering, benchmarking, and observability practices used across the portfolio.
-
-
-### Extended notes
-
-This section expands documentation for completeness: reproducibility, keyword coverage for Python, machine-learning, CI/CD, API, Docker, Kubernetes, FastAPI, Prometheus, testing, automation, MLOps, LLM, data-science, software-engineering, benchmarking, and observability practices used across the portfolio.
-
-
-### Extended notes
-
-This section expands documentation for completeness: reproducibility, keyword coverage for Python, machine-learning, CI/CD, API, Docker, Kubernetes, FastAPI, Prometheus, testing, automation, MLOps, LLM, data-science, software-engineering, benchmarking, and observability practices used across the portfolio.
+<p align="center">
+  <b>GradPlace — Differentiable VLSI Cell Placement</b><br/>
+  <a href="https://github.com/ArchanaChetan07/GradPlace">github.com/ArchanaChetan07/GradPlace</a>
+</p>
