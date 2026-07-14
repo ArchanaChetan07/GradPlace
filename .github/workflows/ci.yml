@@ -1,25 +1,50 @@
-name: CI Pipeline
+name: CI
+
 on:
   push:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+
 jobs:
   test:
-    name: Lint and Test
+    name: Lint and Pytest (CPU)
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.11"
           cache: pip
-      - name: Install dependencies
+
+      - name: Install CPU PyTorch + deps
         run: |
-          pip install pytest pytest-cov flake8
-          pip install -r requirements.txt 2>/dev/null || pip install -r pyproject.toml 2>/dev/null || true
-      - name: Lint
-        run: flake8 . --max-line-length=120 --ignore=E501,W503 --exclude=.git,__pycache__,.ipynb_checkpoints
-        continue-on-error: true
-      - name: Run tests
-        run: pytest tests/ -v --tb=short || echo "Tests completed"
+          pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements.txt
+
+      - name: Flake8 (scoped)
+        run: flake8 placement.py main.py scripts tests --max-line-length=120 --ignore=E501,W503,W293,E203,E402,F824,E722,F841
+
+      - name: Pytest
+        run: pytest tests/ -v --tb=short
+        env:
+          MPLBACKEND: Agg
+
+  docker:
+    name: Docker build
+    runs-on: ubuntu-latest
+    needs: test
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: gradplace:ci
