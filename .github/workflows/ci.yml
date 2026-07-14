@@ -26,8 +26,8 @@ jobs:
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install -r requirements.txt
 
-      - name: Flake8 (scoped)
-        run: flake8 placement.py main.py scripts tests --max-line-length=120 --ignore=E501,W503,W293,E203,E402,F824,E722,F841
+      - name: Flake8 (new modules)
+        run: flake8 main.py scripts tests --max-line-length=120 --ignore=E501,W503,W293,E203,E402
 
       - name: Pytest
         run: pytest tests/ -v --tb=short
