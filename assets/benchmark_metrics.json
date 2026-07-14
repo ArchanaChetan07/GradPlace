@@ -1,0 +1,56 @@
+{
+  "benchmark": {
+    "name": "synthetic_toy_2macro_30std",
+    "label": "synthetic toy (not an ISPD contest benchmark)",
+    "num_macros": 2,
+    "num_std_cells": 30,
+    "seed": 1003
+  },
+  "hardware": {
+    "device": "cpu",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel",
+    "python": "3.11.5",
+    "torch": "2.2.2+cpu"
+  },
+  "hyperparams": {
+    "num_epochs": 2000,
+    "macro_weight": 5.0,
+    "std_cell_bin_cap_fraction": 0.25,
+    "lambda_overlap_ramp": "0.1 \u2192 1.0 \u2192 15.0 (two-phase)"
+  },
+  "before": {
+    "total_wirelength_smooth_manhattan": 15540.73426246643,
+    "normalized_wl": 0.5246146439680229,
+    "overlap_count": 31,
+    "total_overlap_area": 6410.401912214163,
+    "overlap_percentage_pairs_per_cell": 96.875,
+    "num_cells_with_overlaps": 26,
+    "overlap_ratio": 0.8125,
+    "total_cells": 32,
+    "num_nets": 535
+  },
+  "after": {
+    "total_wirelength_smooth_manhattan": 14170.219221115112,
+    "normalized_wl": 0.47834963175377815,
+    "overlap_count": 12,
+    "total_overlap_area": 55.163500022628114,
+    "overlap_percentage_pairs_per_cell": 37.5,
+    "num_cells_with_overlaps": 17,
+    "overlap_ratio": 0.53125,
+    "total_cells": 32,
+    "num_nets": 535
+  },
+  "delta": {
+    "wirelength_reduction_pct": 8.82,
+    "overlap_area_reduction_pct": 99.14,
+    "cells_with_overlaps_before": 26,
+    "cells_with_overlaps_after": 17
+  },
+  "runtime_seconds": 2.874,
+  "artifacts": {
+    "before_png": "assets/placement_before.png",
+    "after_png": "assets/placement_after.png",
+    "side_by_side_png": "assets/placement_before_after.png"
+  }
+}
